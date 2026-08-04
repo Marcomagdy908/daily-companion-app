@@ -1,0 +1,42 @@
+{
+  "fields": [
+    {
+      "field": "id",
+      "type": "number",
+      "required": true
+    },
+    {
+      "field": "date",
+      "type": "string",
+      "required": true
+    },
+    {
+      "field": "type",
+      "type": "string"
+    },
+    {
+      "field": "description",
+      "type": "string"
+    },
+    {
+      "field": "created_at",
+      "type": "string"
+    }
+  ],
+  "data": [
+    {
+      "id": 1785710026374,
+      "date": "2026-08-02",
+      "type": "prayer",
+      "description": "أشكر الله على ٥ نِعَم في حياتي.",
+      "created_at": "2026-08-02T22:33:46.374Z"
+    },
+    {
+      "id": 1785751979145,
+      "date": "2026-08-03",
+      "type": "prayer",
+      "description": "أصلي من أجل شخص محدد.",
+      "created_at": "2026-08-03T10:12:59.145Z"
+    }
+  ]
+}

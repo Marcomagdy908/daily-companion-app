@@ -1,0 +1,51 @@
+# ═════════════════════════════════════════════════════════════════════
+# Codemagic CI/CD — بناء APK لتطبيق رفيق يومي
+# ═════════════════════════════════════════════════════════════════════
+# ملف الإعدادات ده هيبني APK تلقائي على منصة Codemagic السحابية.
+#
+# طريقة الاستخدام:
+#   1. ارفع المشروع على GitHub / GitLab / Bitbucket
+#   2. سجّل في codemagic.io واربط الـ repo
+#   3. اضغط Start Build — هتلاقي APK جاهز خلال 10 دقائق
+# ═════════════════════════════════════════════════════════════════════
+
+workflows:
+  android-workflow:
+    name: بناء APK - رفيق يومي
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      java: 17
+    scripts:
+      - name: نزّل مكتبات Flutter
+        script: |
+          flutter pub get
+
+      - name: ولّد الكود الآلي (freezed + riverpod)
+        script: |
+          dart run build_runner build --delete-conflicting-outputs
+
+      - name: افحص جودة الكود
+        script: |
+          flutter analyze --no-fatal-infos || true
+
+      - name: ابنِ APK للإنتاج
+        script: |
+          flutter build apk --release
+
+      - name: ابنِ APK مقسّم حسب المعمارية (اختياري - أحجام أصغر)
+        script: |
+          flutter build apk --split-per-abi --release
+
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com   # ⚠️ غيّر ده لإيميلك
+        notify:
+          success: true
+          failure: true

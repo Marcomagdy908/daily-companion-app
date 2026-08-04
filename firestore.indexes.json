@@ -1,0 +1,42 @@
+// ─── firestore.indexes.json ────────────────────────────────────────────
+// Daily Companion (رفيق يومي) — Firestore composite indexes
+//
+// Required for ordering and compound queries.
+// Deploy with: firebase deploy --only firestore:indexes
+// ────────────────────────────────────────────────────────────────────────
+
+{
+  "indexes": [
+    {
+      "collectionGroup": "daily_gifts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commitments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "commitments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "challenges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "dayNumber", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

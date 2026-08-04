@@ -1,0 +1,29 @@
+{
+  "fields": [
+    {
+      "field": "day_number",
+      "type": "number",
+      "required": true
+    },
+    {
+      "field": "is_completed",
+      "type": "number"
+    },
+    {
+      "field": "journal_entry",
+      "type": "string"
+    },
+    {
+      "field": "completed_at",
+      "type": "string"
+    }
+  ],
+  "data": [
+    {
+      "day_number": 1,
+      "is_completed": 1,
+      "journal_entry": "",
+      "completed_at": "2026-08-03T10:13:24.435Z"
+    }
+  ]
+}
