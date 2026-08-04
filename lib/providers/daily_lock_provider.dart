@@ -24,6 +24,7 @@ import '../models/growth_state.dart';
 import '../services/gift_service.dart';
 import '../services/commitment_service.dart';
 import '../services/growth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_provider.dart';
 
 /// Current daily status — reactive state machine
@@ -41,7 +42,7 @@ class DailyStatusNotifier extends AsyncNotifier<DailyStatus> {
 
   @override
   Future<DailyStatus> build() async {
-    final user = ref.watch(authStateProvider);
+    final user = ref.watch(currentUserProvider);
     if (user == null) {
       return DailyStatus(date: _today);
     }
@@ -154,7 +155,7 @@ class GrowthStateNotifier extends AsyncNotifier<GrowthState> {
 
   @override
   Future<GrowthState> build() async {
-    final user = ref.watch(authStateProvider);
+    final user = ref.watch(currentUserProvider);
     if (user == null) {
       return GrowthState.initial(userId: '');
     }
@@ -187,7 +188,7 @@ class TodayCommitmentNotifier extends AsyncNotifier<AltarCommitment?> {
 
   @override
   Future<AltarCommitment?> build() async {
-    final user = ref.watch(authStateProvider);
+    final user = ref.watch(currentUserProvider);
     if (user == null) return null;
     return _service.fetchTodayCommitment(user.uid);
   }

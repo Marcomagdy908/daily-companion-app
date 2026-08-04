@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../providers/daily_lock_provider.dart';
+import '../../../../models/daily_status.dart';
 import '../widgets/gift_card.dart';
 import '../widgets/blessing_banner.dart';
 

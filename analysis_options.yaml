@@ -1,5 +1,4 @@
-// ─── analysis_options.yaml ───────────────────────────────────────────
-// Daily Companion (رفيق يومي) — Lint rules
+# Daily Companion (رفيق يومي) - Lint rules
 include: package:flutter_lints/flutter.yaml
 
 linter:

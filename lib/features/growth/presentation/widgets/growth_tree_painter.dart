@@ -52,7 +52,7 @@ class GrowthTreePainter extends CustomPainter {
 
     // ── Growth Particles (when actively growing) ──────────────────────
     if (isGrowing) {
-      _drawGrowthParticles(canvas, canopyCenterY, canopyRadius);
+      _drawGrowthParticles(canvas, size, canopyCenterY, canopyRadius);
     }
 
     // ── Sun / Light source at top ─────────────────────────────────────
@@ -293,7 +293,7 @@ class GrowthTreePainter extends CustomPainter {
     }
   }
 
-  void _drawGrowthParticles(Canvas canvas, double canopyCenterY, double canopyRadius) {
+  void _drawGrowthParticles(Canvas canvas, Size size, double canopyCenterY, double canopyRadius) {
     final particlePaint = Paint()
       ..color = const Color(0xFFFFD54F)
       ..style = PaintingStyle.fill;

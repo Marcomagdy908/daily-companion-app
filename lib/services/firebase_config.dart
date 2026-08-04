@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../firebase_options.dart';
 
 class FirebaseConfig {
   static final FirebaseConfig _instance = FirebaseConfig._();
@@ -19,7 +20,7 @@ class FirebaseConfig {
     );
 
     // Enable Firestore offline persistence
-    await FirebaseFirestore.instance.settings =
+    FirebaseFirestore.instance.settings =
         const Settings(persistenceEnabled: true, cacheSizeBytes: 100 * 1024 * 1024);
   }
 

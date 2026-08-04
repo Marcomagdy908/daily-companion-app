@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../models/growth_state.dart';
+import '../../../../models/daily_status.dart';
 import '../../../../providers/daily_lock_provider.dart';
 import '../widgets/growth_tree_painter.dart';
 import '../widgets/growth_stats_card.dart';

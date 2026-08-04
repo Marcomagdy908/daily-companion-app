@@ -1,6 +1,7 @@
 // ─── features/growth/presentation/widgets/growth_light_painter.dart ────
 // Daily Companion (رفيق يومي) — Alternative "light" visualization
 import 'package:flutter/material.dart';
+import 'dart:math';
 import '../../../../core/theme/app_theme.dart';
 
 class GrowthLightPainter extends CustomPainter {
