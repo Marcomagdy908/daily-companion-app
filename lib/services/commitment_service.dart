@@ -1,12 +1,34 @@
 // ─── services/commitment_service.dart ──────────────────────────────────
-// Daily Companion (رفيق يومي) — Altar of the Heart commitment service
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Daily Companion (رفيق يومي) — Altar of the Heart commitment service (Local Storage)
+import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../models/altar_commitment.dart';
-import 'firebase_config.dart';
 
 class CommitmentService {
-  final FirebaseConfig _config = FirebaseConfig();
+  String _key(String userId) => 'commitments_$userId';
+
+  Future<List<AltarCommitment>> _fetchAll(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_key(userId));
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+
+    try {
+      final List<dynamic> rawList = jsonDecode(jsonStr);
+      return rawList
+          .map((item) => AltarCommitment.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _saveAll(String userId, List<AltarCommitment> list) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = jsonEncode(list.map((c) => c.toJson()).toList());
+    await prefs.setString(_key(userId), jsonStr);
+  }
 
   /// Submit a daily commitment
   Future<AltarCommitment> submitCommitment({
@@ -18,7 +40,7 @@ class CommitmentService {
     final now = DateTime.now();
 
     final commitment = AltarCommitment(
-      id: _config.commitmentsCollection.doc().id,
+      id: const Uuid().v4(),
       userId: userId,
       date: today,
       type: type,
@@ -26,55 +48,47 @@ class CommitmentService {
       submittedAt: now,
     );
 
-    await _config.commitmentsCollection.doc(commitment.id).set(
-      commitment.toJson(),
-    );
+    final list = await _fetchAll(userId);
+    list.removeWhere((c) => c.date == today); // Replace if existing for today
+    list.add(commitment);
+    await _saveAll(userId, list);
+
     return commitment;
   }
 
   /// Fetch today's commitment for a user
   Future<AltarCommitment?> fetchTodayCommitment(String userId) async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final snapshot = await _config.commitmentsCollection
-        .where('userId', isEqualTo: userId)
-        .where('date', isEqualTo: today)
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isEmpty) return null;
-    return AltarCommitment.fromFirestore(snapshot.docs.first);
+    final list = await _fetchAll(userId);
+    try {
+      return list.firstWhere((c) => c.date == today);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Check if user has made a commitment today
   Future<bool> hasTodayCommitment(String userId) async {
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    final snapshot = await _config.commitmentsCollection
-        .where('userId', isEqualTo: userId)
-        .where('date', isEqualTo: today)
-        .limit(1)
-        .get();
-    return snapshot.docs.isNotEmpty;
+    final commitment = await fetchTodayCommitment(userId);
+    return commitment != null;
   }
 
   /// Mark a commitment as fulfilled
-  Future<void> fulfillCommitment(String commitmentId) async {
-    await _config.commitmentsCollection
-        .doc(commitmentId)
-        .update({'isFulfilled': true, 'fulfilledAt': DateTime.now().toIso8601String()});
+  Future<void> fulfillCommitment(String commitmentId, String userId) async {
+    final list = await _fetchAll(userId);
+    final index = list.indexWhere((c) => c.id == commitmentId);
+    if (index != -1) {
+      list[index] = list[index].copyWith(
+        isFulfilled: true,
+        fulfilledAt: DateTime.now(),
+      );
+      await _saveAll(userId, list);
+    }
   }
 
   /// Stream today's commitment
-  Stream<AltarCommitment?> watchTodayCommitment(String userId) {
-    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    return _config.commitmentsCollection
-        .where('userId', isEqualTo: userId)
-        .where('date', isEqualTo: today)
-        .limit(1)
-        .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isEmpty) return null;
-      return AltarCommitment.fromFirestore(snapshot.docs.first);
-    });
+  Stream<AltarCommitment?> watchTodayCommitment(String userId) async* {
+    yield await fetchTodayCommitment(userId);
   }
 
   /// Get commitment history for streak calculation
@@ -82,14 +96,9 @@ class CommitmentService {
     String userId, {
     int limit = 60,
   }) async {
-    final snapshot = await _config.commitmentsCollection
-        .where('userId', isEqualTo: userId)
-        .orderBy('date', descending: true)
-        .limit(limit)
-        .get();
-
-    return snapshot.docs
-        .map((doc) => AltarCommitment.fromFirestore(doc))
-        .toList();
+    final list = await _fetchAll(userId);
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list.take(limit).toList();
   }
 }
+

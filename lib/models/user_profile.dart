@@ -1,6 +1,5 @@
 // ─── models/user_profile.dart ──────────────────────────────────────────
 // Daily Companion (رفيق يومي) — User profile model
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'user_profile.freezed.dart';
@@ -24,11 +23,5 @@ class UserProfile with _$UserProfile {
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>
       _$UserProfileFromJson(json);
-
-  factory UserProfile.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data()!;
-    return UserProfile.fromJson({...data, 'uid': doc.id});
-  }
 }
+

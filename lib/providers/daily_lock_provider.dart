@@ -24,7 +24,6 @@ import '../models/growth_state.dart';
 import '../services/gift_service.dart';
 import '../services/commitment_service.dart';
 import '../services/growth_service.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'auth_provider.dart';
 
 /// Current daily status — reactive state machine
@@ -49,12 +48,13 @@ class DailyStatusNotifier extends AsyncNotifier<DailyStatus> {
 
     // Check if today's gift exists
     final gift = await _giftService.fetchTodayGift();
+    final hasRead = await _giftService.hasReadTodayGift(user.uid);
     final commitment = await _commitmentService.fetchTodayCommitment(user.uid);
 
     return DailyStatus(
       date: _today,
       giftReceived: gift != null,
-      giftRead: gift?.isRead ?? false,
+      giftRead: hasRead,
       commitmentMade: commitment != null,
       commitmentFulfilled: commitment?.isFulfilled ?? false,
       dayComplete: commitment != null, // A submitted commitment = day complete
@@ -64,12 +64,15 @@ class DailyStatusNotifier extends AsyncNotifier<DailyStatus> {
 
   /// Called when the user reads the gift — triggers commitment screen
   Future<void> markGiftRead() async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+    
     final current = state.value!;
-    if (!current.giftReceived) return;
+    if (!current.giftReceived || current.giftRead) return;
 
     final gift = await _giftService.fetchTodayGift();
-    if (gift != null && !gift.isRead) {
-      await _giftService.markGiftAsRead(gift.id);
+    if (gift != null) {
+      await _giftService.markGiftAsRead(user.uid, gift.id);
     }
 
     state = AsyncData(current.copyWith(giftRead: true));
@@ -112,15 +115,7 @@ class DailyStatusNotifier extends AsyncNotifier<DailyStatus> {
   /// Check if the user is locked out (missed yesterday)
   Future<bool> isLockedOut() async {
     final current = state.value!;
-    // Day is locked if not completed AND it's past midnight
     if (current.dayComplete) return false;
-
-    // Check if there was a previous day that was incomplete
-    final yesterday = DateFormat('yyyy-MM-dd').format(
-      DateTime.now().subtract(const Duration(days: 1)),
-    );
-    // A new day: if yesterday was not completed, growth pauses
-    // but today's gift is still available — the lock only affects growth
     return false; // Gift is always available; growth pauses instead
   }
 
@@ -138,11 +133,6 @@ class DailyStatusNotifier extends AsyncNotifier<DailyStatus> {
       state.value?.giftRead == true && !(state.value?.commitmentMade ?? true);
 }
 
-// ─── Auth State ────────────────────────────────────────────────────────
-final authStateProvider = StreamProvider<User?>((ref) {
-  // Placeholder — replace with actual Firebase Auth stream
-  return Stream.value(null);
-});
 
 // ─── Growth State ──────────────────────────────────────────────────────
 final growthStateProvider =

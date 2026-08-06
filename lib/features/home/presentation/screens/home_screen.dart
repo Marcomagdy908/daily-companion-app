@@ -19,15 +19,10 @@ import '../../../growth/presentation/screens/growth_screen.dart';
 import '../../../challenge/presentation/screens/challenge_screen.dart';
 import '../../../curriculum/presentation/screens/curriculum_screen.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+import '../../../../providers/navigation_provider.dart';
+
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
 
   final List<Widget> _screens = const [
     GiftScreen(),
@@ -38,10 +33,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentIndex = ref.watch(navigationIndexProvider);
+
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
+        index: currentIndex,
         children: _screens,
       ),
       bottomNavigationBar: Container(
@@ -64,32 +61,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 _NavItem(
                   icon: '🌅',
                   label: 'الهدية',
-                  isActive: _currentIndex == 0,
-                  onTap: () => setState(() => _currentIndex = 0),
+                  isActive: currentIndex == 0,
+                  onTap: () => ref.read(navigationIndexProvider.notifier).state = 0,
                 ),
                 _NavItem(
                   icon: '🔥',
                   label: 'المذبح',
-                  isActive: _currentIndex == 1,
-                  onTap: () => setState(() => _currentIndex = 1),
+                  isActive: currentIndex == 1,
+                  onTap: () => ref.read(navigationIndexProvider.notifier).state = 1,
                 ),
                 _NavItem(
                   icon: '🌱',
                   label: 'النمو',
-                  isActive: _currentIndex == 2,
-                  onTap: () => setState(() => _currentIndex = 2),
+                  isActive: currentIndex == 2,
+                  onTap: () => ref.read(navigationIndexProvider.notifier).state = 2,
                 ),
                 _NavItem(
                   icon: '📅',
                   label: 'التحدي',
-                  isActive: _currentIndex == 3,
-                  onTap: () => setState(() => _currentIndex = 3),
+                  isActive: currentIndex == 3,
+                  onTap: () => ref.read(navigationIndexProvider.notifier).state = 3,
                 ),
                 _NavItem(
                   icon: '📖',
                   label: 'المنهج',
-                  isActive: _currentIndex == 4,
-                  onTap: () => setState(() => _currentIndex = 4),
+                  isActive: currentIndex == 4,
+                  onTap: () => ref.read(navigationIndexProvider.notifier).state = 4,
                 ),
               ],
             ),

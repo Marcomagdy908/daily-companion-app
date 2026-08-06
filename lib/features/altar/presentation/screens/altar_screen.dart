@@ -15,6 +15,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../models/altar_commitment.dart';
 import '../../../../providers/daily_lock_provider.dart';
 import '../../../../providers/auth_provider.dart';
+import '../../../../providers/navigation_provider.dart';
 import '../widgets/commitment_type_selector.dart';
 import '../widgets/commitment_preset_chips.dart';
 
@@ -44,6 +45,14 @@ class _AltarScreenState extends ConsumerState<AltarScreen> {
     _descriptionController.dispose();
     _confettiController.dispose();
     super.dispose();
+  }
+
+  void _safeNavigateBack() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop(true);
+    } else {
+      ref.read(navigationIndexProvider.notifier).state = 0;
+    }
   }
 
   Future<void> _submitCommitment() async {
@@ -81,7 +90,7 @@ class _AltarScreenState extends ConsumerState<AltarScreen> {
       // Navigate back after a brief celebration
       await Future.delayed(const Duration(seconds: 2));
       if (mounted) {
-        Navigator.of(context).pop(true); // Return success
+        _safeNavigateBack();
       }
     } catch (e) {
       if (mounted) {
@@ -93,6 +102,7 @@ class _AltarScreenState extends ConsumerState<AltarScreen> {
       if (mounted) setState(() => _isSubmitting = false);
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -157,21 +167,27 @@ class _AltarScreenState extends ConsumerState<AltarScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 12),
+          // ── Header Bar ───────────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white70),
+                onPressed: _safeNavigateBack,
+                tooltip: 'العودة',
+              ),
+              Text(
+                'مذبح القلب',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(width: 48), // Balance space
+            ],
+          ),
 
-          // ── Title ─────────────────────────────────────────────────
-          Text(
-            'مذبح القلب',
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: 500.ms),
-
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
 
           Text(
             'ماذا ستقدم لله اليوم؟',
@@ -260,6 +276,7 @@ class _AltarScreenState extends ConsumerState<AltarScreen> {
                 hintStyle: TextStyle(color: Colors.white38),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.all(16),
+                filled: false, // Override global theme to prevent white background
               ),
             ),
           )
@@ -346,11 +363,11 @@ class _AltarScreenState extends ConsumerState<AltarScreen> {
 }
 
 // ─── Already Committed View ─────────────────────────────────────────────
-class _AlreadyCommittedView extends StatelessWidget {
+class _AlreadyCommittedView extends ConsumerWidget {
   const _AlreadyCommittedView();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -375,13 +392,42 @@ class _AlreadyCommittedView extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.growthGreen,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('العودة'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    } else {
+                      ref.read(navigationIndexProvider.notifier).state = 0;
+                    }
+                  },
+                  icon: const Icon(Icons.home, color: Colors.white, size: 18),
+                  label: const Text('الرئيسية'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                    ref.read(navigationIndexProvider.notifier).state = 2;
+                  },
+                  icon: const Text('🌱', style: TextStyle(fontSize: 18)),
+                  label: const Text('رؤية النمو'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.growthGreen,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -389,3 +435,4 @@ class _AlreadyCommittedView extends StatelessWidget {
     );
   }
 }
+

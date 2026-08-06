@@ -2,6 +2,7 @@
 // Daily Companion (رفيق يومي) — Local notification & daily reminder service
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
@@ -17,6 +18,9 @@ class NotificationService {
   static const String _channelDesc = 'Daily spiritual reminders';
 
   Future<void> initialize() async {
+    // Initialize timezone database
+    tz.initializeTimeZones();
+
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 

@@ -1,22 +1,48 @@
 // ─── services/gift_service.dart ────────────────────────────────────────
-// Daily Companion (رفيق يومي) — Divine Gift service (Firestore)
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Daily Companion (رفيق يومي) — Divine Gift service (Local Storage)
+import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:uuid/uuid.dart';
 import '../models/daily_gift.dart';
-import 'firebase_config.dart';
 
 class GiftService {
-  final FirebaseConfig _config = FirebaseConfig();
+  static const String _giftsKey = 'daily_gifts_local';
+  static const String _readsKey = 'user_reads_local';
+
+  Future<List<DailyGift>> _fetchAllGifts() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_giftsKey);
+    if (jsonStr == null || jsonStr.isEmpty) return [];
+
+    try {
+      final List<dynamic> rawList = jsonDecode(jsonStr);
+      return rawList
+          .map((item) => DailyGift.fromJson(item as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _saveGifts(List<DailyGift> gifts) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = jsonEncode(gifts.map((g) => g.toJson()).toList());
+    await prefs.setString(_giftsKey, jsonStr);
+  }
 
   /// Fetch the gift of the day by date
   Future<DailyGift?> fetchGiftForDate(String date) async {
-    final snapshot = await _config.giftsCollection
-        .where('date', isEqualTo: date)
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isEmpty) return null;
-    return DailyGift.fromFirestore(snapshot.docs.first);
+    final gifts = await _fetchAllGifts();
+    try {
+      return gifts.firstWhere((g) => g.date == date);
+    } catch (_) {
+      // Generate default gift for date if none exists locally
+      final defaultGift = _generateDefaultGift(date);
+      gifts.add(defaultGift);
+      await _saveGifts(gifts);
+      return defaultGift;
+    }
   }
 
   /// Fetch today's gift
@@ -25,22 +51,30 @@ class GiftService {
     return fetchGiftForDate(today);
   }
 
-  /// Mark a gift as read by the user
-  Future<void> markGiftAsRead(String giftId) async {
-    await _config.giftsCollection.doc(giftId).update({'isRead': true});
+  /// Mark a gift as read by a specific user
+  Future<void> markGiftAsRead(String userId, String giftId) async {
+    final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    final readId = '${userId}_$today';
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> reads = prefs.getStringList(_readsKey) ?? [];
+    if (!reads.contains(readId)) {
+      reads.add(readId);
+      await prefs.setStringList(_readsKey, reads);
+    }
   }
 
-  /// Stream today's gift (real-time)
-  Stream<DailyGift?> watchTodayGift() {
+  /// Check if a user has read today's gift
+  Future<bool> hasReadTodayGift(String userId) async {
     final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    return _config.giftsCollection
-        .where('date', isEqualTo: today)
-        .limit(1)
-        .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isEmpty) return null;
-      return DailyGift.fromFirestore(snapshot.docs.first);
-    });
+    final readId = '${userId}_$today';
+    final prefs = await SharedPreferences.getInstance();
+    final List<String> reads = prefs.getStringList(_readsKey) ?? [];
+    return reads.contains(readId);
+  }
+
+  /// Stream today's gift
+  Stream<DailyGift?> watchTodayGift() async* {
+    yield await fetchTodayGift();
   }
 
   /// Seed a gift — admin/seed function
@@ -52,8 +86,9 @@ class GiftService {
     required String blessingReminder,
     String category = 'guidance',
   }) async {
+    final gifts = await _fetchAllGifts();
     final gift = DailyGift(
-      id: _config.giftsCollection.doc().id,
+      id: const Uuid().v4(),
       date: date,
       verseReference: verseReference,
       verseText: verseText,
@@ -61,6 +96,22 @@ class GiftService {
       blessingReminder: blessingReminder,
       category: category,
     );
-    await _config.giftsCollection.doc(gift.id).set(gift.toJson());
+    gifts.removeWhere((g) => g.date == date);
+    gifts.add(gift);
+    await _saveGifts(gifts);
+  }
+
+  /// Built-in fallback gift generator
+  DailyGift _generateDefaultGift(String date) {
+    return DailyGift(
+      id: 'gift_$date',
+      date: date,
+      verseReference: 'يوحنا 14: 27',
+      verseText: 'سَلاَمًا أَتْرُكُ لَكُمْ. سَلاَمِي أُعْطِيكُمْ. لَيْسَ كَمَا يُعْطِي ٱلْعَالَمُ أُعْطِيكُمْ أَنَا.',
+      reflection: 'سلام المسيح لا يعتمد على الظروف الخارجية، بل يملأ القلب بالطمأنينة والثقة في محبة الله العجيبة.',
+      blessingReminder: 'تذكر اليوم أنك محاط بسلام الله الذي يفوق كل عقل.',
+      category: 'peace',
+    );
   }
 }
+

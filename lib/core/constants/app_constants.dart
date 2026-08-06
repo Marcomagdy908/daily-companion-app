@@ -9,7 +9,7 @@ class AppConstants {
   static const String appNameEn = 'Daily Companion';
   static const String appTagline = 'Give and Take — عطاء متبادل';
 
-  // ── Firebase Collections ────────────────────────────────────────────
+  // ── Data Collections / Keys ─────────────────────────────────────────
   static const String usersCollection = 'users';
   static const String giftsCollection = 'daily_gifts';
   static const String commitmentsCollection = 'commitments';

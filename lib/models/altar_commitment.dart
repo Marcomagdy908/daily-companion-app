@@ -1,6 +1,5 @@
 // ─── models/altar_commitment.dart ──────────────────────────────────────
 // Daily Companion (رفيق يومي) — Altar of the Heart commitment model
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'altar_commitment.freezed.dart';
@@ -32,11 +31,5 @@ class AltarCommitment with _$AltarCommitment {
 
   factory AltarCommitment.fromJson(Map<String, dynamic> json) =>
       _$AltarCommitmentFromJson(json);
-
-  factory AltarCommitment.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
-    final data = doc.data()!;
-    return AltarCommitment.fromJson({...data, 'id': doc.id});
-  }
 }
+

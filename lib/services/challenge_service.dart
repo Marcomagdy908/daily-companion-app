@@ -1,41 +1,42 @@
 // ─── services/challenge_service.dart ───────────────────────────────────
-// Daily Companion (رفيق يومي) — 30-Day Challenge service
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Daily Companion (رفيق يومي) — 30-Day Challenge service (Local Storage)
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/challenge_day.dart';
-import 'firebase_config.dart';
 
 class ChallengeService {
-  final FirebaseConfig _config = FirebaseConfig();
+  String _key(String userId) => 'challenge_days_$userId';
 
   /// Fetch all challenge days for a user
   Future<List<ChallengeDay>> fetchChallengeDays(String userId) async {
-    final snapshot = await _config.challengesCollection
-        .doc(userId)
-        .collection('days')
-        .orderBy('dayNumber')
-        .get();
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_key(userId));
 
-    if (snapshot.docs.isEmpty) {
+    if (jsonStr == null || jsonStr.isEmpty) {
       return _initializeChallenge(userId);
     }
 
-    return snapshot.docs
-        .map((doc) => ChallengeDay.fromJson(doc.data()))
-        .toList();
+    try {
+      final List<dynamic> rawList = jsonDecode(jsonStr);
+      final days = rawList.map((item) => ChallengeDay.fromJson(item as Map<String, dynamic>)).toList();
+      days.sort((a, b) => a.dayNumber.compareTo(b.dayNumber));
+      return days;
+    } catch (_) {
+      return _initializeChallenge(userId);
+    }
   }
 
   /// Initialize 30-day challenge for a new user
-  List<ChallengeDay> _initializeChallenge(String userId) {
+  Future<List<ChallengeDay>> _initializeChallenge(String userId) async {
     final days = _challengeContent();
-    // Write to Firestore
-    for (final day in days) {
-      _config.challengesCollection
-          .doc(userId)
-          .collection('days')
-          .doc('day_${day.dayNumber}')
-          .set(day.toJson());
-    }
+    await _saveDays(userId, days);
     return days;
+  }
+
+  Future<void> _saveDays(String userId, List<ChallengeDay> days) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = jsonEncode(days.map((d) => d.toJson()).toList());
+    await prefs.setString(_key(userId), jsonStr);
   }
 
   /// Mark a challenge day as completed (with journal entry)
@@ -44,41 +45,26 @@ class ChallengeService {
     required int dayNumber,
     String? journalEntry,
   }) async {
-    await _config.challengesCollection
-        .doc(userId)
-        .collection('days')
-        .doc('day_$dayNumber')
-        .update({
-      'isCompleted': true,
-      'userJournalEntry': journalEntry ?? '',
-      'completedAt': DateTime.now().toIso8601String(),
-    });
+    final days = await fetchChallengeDays(userId);
+    final updatedDays = days.map((day) {
+      if (day.dayNumber == dayNumber) {
+        return day.copyWith(
+          isCompleted: true,
+          userJournalEntry: journalEntry ?? '',
+          completedAt: DateTime.now(),
+        );
+      } else if (day.dayNumber == dayNumber + 1) {
+        return day.copyWith(isUnlocked: true);
+      }
+      return day;
+    }).toList();
 
-    // Unlock the next day
-    if (dayNumber < 30) {
-      await _config.challengesCollection
-          .doc(userId)
-          .collection('days')
-          .doc('day_${dayNumber + 1}')
-          .update({'isUnlocked': true});
-    }
+    await _saveDays(userId, updatedDays);
   }
 
   /// Stream challenge days
-  Stream<List<ChallengeDay>> watchChallengeDays(String userId) {
-    return _config.challengesCollection
-        .doc(userId)
-        .collection('days')
-        .orderBy('dayNumber')
-        .snapshots()
-        .map((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        return _initializeChallenge(userId);
-      }
-      return snapshot.docs
-          .map((doc) => ChallengeDay.fromJson(doc.data()))
-          .toList();
-    });
+  Stream<List<ChallengeDay>> watchChallengeDays(String userId) async* {
+    yield await fetchChallengeDays(userId);
   }
 
   /// Get challenge progress percentage
@@ -88,6 +74,7 @@ class ChallengeService {
     final completed = days.where((d) => d.isCompleted).length;
     return completed / days.length;
   }
+
 
   /// ─── 30-Day Challenge Content (Arabic) ───────────────────────────────
   static List<ChallengeDay> _challengeContent() {

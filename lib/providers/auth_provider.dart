@@ -1,27 +1,34 @@
 // ─── providers/auth_provider.dart ───────────────────────────────────────
-// Daily Companion (رفيق يومي) — Firebase Auth provider (abstracted)
-//
-// This file is referenced by daily_lock_provider.dart.
-// Replace the placeholder authStateProvider with real Firebase Auth.
+// Daily Companion (رفيق يومي) — Local User Auth provider (No Firebase Auth)
 // ────────────────────────────────────────────────────────────────────────
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// The actual Firebase Auth state stream
-final firebaseAuthStateChangesProvider = StreamProvider<User?>((ref) {
-  return FirebaseAuth.instance.authStateChanges();
+/// Representation of a local offline user
+class LocalUser {
+  final String uid;
+  final String displayName;
+  final String email;
+
+  const LocalUser({
+    this.uid = 'local_user',
+    this.displayName = 'رفيق',
+    this.email = 'local@companion.app',
+  });
+}
+
+/// Stream of auth state changes (always yields local user)
+final authStateProvider = StreamProvider<LocalUser?>((ref) {
+  return Stream.value(const LocalUser());
 });
 
-/// Convenience: currently signed-in user
-final currentUserProvider = Provider<User?>((ref) {
-  return ref.watch(firebaseAuthStateChangesProvider).valueOrNull;
+/// Convenience: currently active local user
+final currentUserProvider = Provider<LocalUser?>((ref) {
+  return const LocalUser();
 });
 
-/// Whether the user is authenticated
+/// Always true for local offline app
 final isAuthenticatedProvider = Provider<bool>((ref) {
-  return ref.watch(currentUserProvider) != null;
+  return true;
 });
 
-/// Auth state for daily_lock_provider compatibility (alias)
-final authStateProvider = firebaseAuthStateChangesProvider;

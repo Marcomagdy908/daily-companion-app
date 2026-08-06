@@ -15,7 +15,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../providers/daily_lock_provider.dart';
+import '../../../../providers/auth_provider.dart';
+import '../../../../providers/navigation_provider.dart';
 import '../../../../models/daily_status.dart';
+import '../../../../services/gift_service.dart';
 import '../widgets/gift_card.dart';
 import '../widgets/blessing_banner.dart';
 
@@ -59,9 +62,8 @@ class _GiftScreenState extends ConsumerState<GiftScreen>
   }
 
   void _navigateToCommitment() {
-    // Navigate to Altar of the Heart — the commitment screen
-    // Using named route; defined in app_router
-    Navigator.of(context).pushNamed('/altar');
+    // Switch to Altar of the Heart tab (index 1)
+    ref.read(navigationIndexProvider.notifier).state = 1;
   }
 
   @override
@@ -286,22 +288,34 @@ class _ErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.error_outline, size: 48, color: AppTheme.errorColor),
-          const SizedBox(height: 16),
-          Text('حدث خطأ: $message'),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppTheme.errorColor),
+            const SizedBox(height: 24),
+            Text(
+              'حدث خطأ في تحميل عطية اليوم',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ─── No Gift Card (fallback) ──────────────────────────────────────────
-class _NoGiftCard extends StatelessWidget {
+// ─── No Gift Card (fallback with Seed button for debug) ──────────────
+class _NoGiftCard extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -324,6 +338,30 @@ class _NoGiftCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
+          const SizedBox(height: 24),
+          TextButton.icon(
+
+              onPressed: () async {
+                final today = DateTime.now();
+                final dateStr = "${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}";
+                
+                await GiftService().createGift(
+                  date: dateStr,
+                  verseReference: 'مزمور ٢٣:١',
+                  verseText: 'اَلرَّبُّ رَاعِيَّ فَلَا يُعْوِزُنِي شَيْءٌ.',
+                  reflection: 'الله يعتني بك في كل تفاصيل يومك. ثق أنه يقودك إلى المراعي الخضراء.',
+                  blessingReminder: 'تذكر أنك محبوب ومحمي اليوم.',
+                );
+                
+                ref.invalidate(todayGiftProvider);
+                ref.invalidate(dailyStatusProvider);
+              },
+              icon: const Icon(Icons.auto_fix_high, size: 16),
+              label: const Text('توليد عطية تجريبية (Debug)'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor.withOpacity(0.6),
+              ),
+            ),
         ],
       ),
     );

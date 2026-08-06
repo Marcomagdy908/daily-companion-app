@@ -1,24 +1,37 @@
 // ─── services/growth_service.dart ──────────────────────────────────────
-// Daily Companion (رفيق يومي) — Growth state service (tree / light)
-import 'package:cloud_firestore/cloud_firestore.dart';
+// Daily Companion (رفيق يومي) — Growth state service (tree / light) (Local Storage)
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/growth_state.dart';
-import 'firebase_config.dart';
 
 class GrowthService {
-  final FirebaseConfig _config = FirebaseConfig();
+  String _key(String userId) => 'growth_state_$userId';
 
   /// Fetch or create the growth state for a user
   Future<GrowthState> fetchGrowthState(String userId) async {
-    final doc = await _config.growthCollection.doc(userId).get();
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_key(userId));
 
-    if (!doc.exists || doc.data() == null) {
-      // Create initial state
+    if (jsonStr == null || jsonStr.isEmpty) {
       final initialState = GrowthState.initial(userId: userId);
-      await _config.growthCollection.doc(userId).set(initialState.toJson());
+      await saveGrowthState(initialState);
       return initialState;
     }
 
-    return GrowthState.fromJson({...doc.data()!, 'userId': userId});
+    try {
+      final Map<String, dynamic> map = jsonDecode(jsonStr);
+      return GrowthState.fromJson({...map, 'userId': userId});
+    } catch (_) {
+      final initialState = GrowthState.initial(userId: userId);
+      await saveGrowthState(initialState);
+      return initialState;
+    }
+  }
+
+  Future<void> saveGrowthState(GrowthState state) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = jsonEncode(state.toJson());
+    await prefs.setString(_key(state.userId), jsonStr);
   }
 
   /// Update growth state after successful commitment
@@ -45,7 +58,7 @@ class GrowthService {
       brightnessValue: newBrightness,
     );
 
-    await _config.growthCollection.doc(userId).set(updated.toJson());
+    await saveGrowthState(updated);
     return updated;
   }
 
@@ -64,18 +77,13 @@ class GrowthService {
       brightnessValue: (current.brightnessValue - 0.01).clamp(0.0, 1.0),
     );
 
-    await _config.growthCollection.doc(userId).set(updated.toJson());
+    await saveGrowthState(updated);
     return updated;
   }
 
-  /// Watch growth state in real-time
-  Stream<GrowthState> watchGrowthState(String userId) {
-    return _config.growthCollection.doc(userId).snapshots().map((doc) {
-      if (!doc.exists || doc.data() == null) {
-        return GrowthState.initial(userId: userId);
-      }
-      return GrowthState.fromJson({...doc.data()!, 'userId': userId});
-    });
+  /// Watch growth state
+  Stream<GrowthState> watchGrowthState(String userId) async* {
+    yield await fetchGrowthState(userId);
   }
 
   /// Leaves earned = 1 + bonus for milestone streaks
@@ -86,3 +94,4 @@ class GrowthService {
     return 1;
   }
 }
+
