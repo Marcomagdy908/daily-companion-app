@@ -24,6 +24,7 @@ import '../models/growth_state.dart';
 import '../services/gift_service.dart';
 import '../services/commitment_service.dart';
 import '../services/growth_service.dart';
+import '../services/notification_service.dart';
 import 'auth_provider.dart';
 
 /// Current daily status — reactive state machine
@@ -163,7 +164,16 @@ class TodayGiftNotifier extends AsyncNotifier<DailyGift?> {
 
   @override
   Future<DailyGift?> build() async {
-    return _giftService.fetchTodayGift();
+    final gift = await _giftService.fetchTodayGift();
+    if (gift != null) {
+      // Schedule daily reminder with today's gift details (verse & text)
+      await NotificationService().scheduleDailyGiftNotification(
+        gift: gift,
+        hour: 8,
+        minute: 0,
+      );
+    }
+    return gift;
   }
 }
 
