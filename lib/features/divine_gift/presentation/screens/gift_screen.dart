@@ -19,6 +19,7 @@ import '../../../../providers/auth_provider.dart';
 import '../../../../providers/navigation_provider.dart';
 import '../../../../models/daily_status.dart';
 import '../../../../services/gift_service.dart';
+import '../../../../services/notification_service.dart';
 import '../widgets/gift_card.dart';
 import '../widgets/blessing_banner.dart';
 
@@ -111,7 +112,21 @@ class _GiftScreenState extends ConsumerState<GiftScreen>
             const SizedBox(height: 20),
 
             // ── Morning Greeting ────────────────────────────────────
-            _MorningGreeting()
+            _MorningGreeting(
+              onTestNotification: gift != null
+                  ? () async {
+                      await NotificationService().showInstantGiftNotification(gift);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('🔔 تم إرسال إشعار العطية الفوري!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    }
+                  : null,
+            )
                 .animate()
                 .fadeIn(duration: 600.ms)
                 .slideY(begin: -0.2, end: 0, duration: 600.ms),
@@ -162,6 +177,10 @@ class _GiftScreenState extends ConsumerState<GiftScreen>
 
 // ─── Morning Greeting Widget ────────────────────────────────────────────
 class _MorningGreeting extends StatelessWidget {
+  final VoidCallback? onTestNotification;
+
+  const _MorningGreeting({this.onTestNotification});
+
   @override
   Widget build(BuildContext context) {
     final hour = DateTime.now().hour;
@@ -173,13 +192,33 @@ class _MorningGreeting extends StatelessWidget {
 
     return Column(
       children: [
-        Text(
-          greeting,
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.w700,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(width: 40),
+            Expanded(
+              child: Text(
+                greeting,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                textAlign: TextAlign.center,
               ),
-          textAlign: TextAlign.center,
+            ),
+            if (onTestNotification != null)
+              IconButton(
+                onPressed: onTestNotification,
+                tooltip: 'تجربة إشعار العطية',
+                icon: const Icon(
+                  Icons.notifications_active_rounded,
+                  color: AppTheme.primaryColor,
+                  size: 24,
+                ),
+              )
+            else
+              const SizedBox(width: 40),
+          ],
         ),
         const SizedBox(height: 8),
         Text(
@@ -347,10 +386,10 @@ class _NoGiftCard extends ConsumerWidget {
                 
                 await GiftService().createGift(
                   date: dateStr,
-                  verseReference: 'مزمور ٢٣:١',
-                  verseText: 'اَلرَّبُّ رَاعِيَّ فَلَا يُعْوِزُنِي شَيْءٌ.',
-                  reflection: 'الله يعتني بك في كل تفاصيل يومك. ثق أنه يقودك إلى المراعي الخضراء.',
-                  blessingReminder: 'تذكر أنك محبوب ومحمي اليوم.',
+                  verseReference: 'أمثال 23: 26',
+                  verseText: 'يَا ابْنِي أَعْطِنِي قَلْبَكَ، وَلْتُلاَحِظْ عَيْنَاكَ طُرُقِي.',
+                  reflection: 'الله لا يطلب منا سوى قلبنا المخلص ليملأه بمحبته وسلامه، وحين تلاحظ عيناك طرقه تجد النور والأمان.',
+                  blessingReminder: 'أعظم حاجة نقدمها لربنا هي قلبنا.. حاول دائماً تخلي قلبك ذبيحة حية مرضية لربنا 🤍🕊️',
                 );
                 
                 ref.invalidate(todayGiftProvider);
