@@ -88,30 +88,48 @@ class _FlipFlashcardState extends State<FlipFlashcard>
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            widget.card.front,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-              height: 1.5,
-            ),
+      child: Center(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.card.title.isNotEmpty) ...[
+                Text(
+                  widget.card.title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+              Text(
+                widget.card.front,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                widget.card.isQuestion ? '💭 اضغط للتأمل' : '👆 اضغط لتقلب البطاقة',
+                style: const TextStyle(
+                  fontFamily: 'Cairo',
+                  fontSize: 13,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            widget.card.isQuestion ? '💭 اضغط للتأمل' : '👆 اضغط لتقلب البطاقة',
-            style: const TextStyle(
-              fontFamily: 'Cairo',
-              fontSize: 13,
-              color: Colors.white70,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -123,47 +141,52 @@ class _FlipFlashcardState extends State<FlipFlashcard>
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (widget.card.isQuestion) ...[
-            const Text('🕊️', style: TextStyle(fontSize: 32)),
-            const SizedBox(height: 12),
-            Text(
-              widget.card.front,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppTheme.textPrimary,
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'خد لحظة وفكّر في إجابتك — مفيش إجابة صح أو غلط',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 12,
-                color: AppTheme.textSecondary,
-              ),
-            ),
-          ] else ...[
-            Text(
-              widget.card.back,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'Cairo',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.textPrimary,
-                height: 1.6,
-              ),
-            ),
-          ],
-        ],
+      child: Center(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (widget.card.isQuestion) ...[
+                const Text('🕊️', style: TextStyle(fontSize: 32)),
+                const SizedBox(height: 12),
+                Text(
+                  widget.card.front,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'خد لحظة وفكّر في إجابتك — مفيش إجابة صح أو غلط',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  widget.card.back,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'Cairo',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }

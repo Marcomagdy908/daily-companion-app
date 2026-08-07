@@ -239,7 +239,7 @@ class _CardChip extends StatelessWidget {
             ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 220),
               child: Text(
-                card.front,
+                card.chipLabel,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(

@@ -9,16 +9,20 @@
 /// as a personal-reflection prompt rather than an "answer" to reveal.
 class CurriculumCard {
   final String id;
+  final String title;
   final String front;
   final String back;
   final bool isQuestion;
 
   const CurriculumCard({
     required this.id,
+    this.title = '',
     required this.front,
     required this.back,
     this.isQuestion = false,
   });
+
+  String get chipLabel => title.isNotEmpty ? title : front;
 }
 
 /// A named group of cards inside a section (e.g. "أولاً: الإنسان القيمة والجوهر").
