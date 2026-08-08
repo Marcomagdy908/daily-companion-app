@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import '../models/daily_gift.dart';
+import 'web_notification_exporter.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._();
@@ -17,7 +18,10 @@ class NotificationService {
   static const String _channelDesc = 'Daily spiritual reminders & gifts';
 
   Future<void> initialize() async {
-    if (kIsWeb) return; // Web uses Web Notifications or browser toasts if needed
+    if (kIsWeb) {
+      await requestPermissions();
+      return;
+    }
 
     // Initialize timezone database
     tz.initializeTimeZones();
@@ -40,9 +44,11 @@ class NotificationService {
     await requestPermissions();
   }
 
-  /// Request notification permissions (Android 13+ & iOS)
+  /// Request notification permissions (Android 13+, iOS & Web)
   Future<bool?> requestPermissions() async {
-    if (kIsWeb) return false;
+    if (kIsWeb) {
+      return await requestWebNotificationPermission();
+    }
 
     final androidImplementation =
         _plugin.resolvePlatformSpecificImplementation<
@@ -67,7 +73,13 @@ class NotificationService {
     int hour = 8,
     int minute = 0,
   }) async {
-    if (kIsWeb) return;
+    final title = '🎁 عطية اليوم: ${gift.verseReference}';
+    final body = '«${gift.verseText}»\n${gift.blessingReminder}';
+
+    if (kIsWeb) {
+      showWebNotification(title, body);
+      return;
+    }
 
     // Cancel existing scheduled notifications
     await _plugin.cancelAll();
@@ -92,9 +104,6 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    final title = '🎁 عطية اليوم: ${gift.verseReference}';
-    final body = '«${gift.verseText}»\n${gift.blessingReminder}';
-
     await _plugin.zonedSchedule(
       0, // notification id
       title,
@@ -110,7 +119,13 @@ class NotificationService {
 
   /// Show an instant notification containing today's gift
   Future<void> showInstantGiftNotification(DailyGift gift) async {
-    if (kIsWeb) return;
+    final title = '🎁 عطية اليوم: ${gift.verseReference}';
+    final body = '«${gift.verseText}»\n\n${gift.reflection}';
+
+    if (kIsWeb) {
+      showWebNotification(title, body);
+      return;
+    }
 
     const androidDetails = AndroidNotificationDetails(
       _channelId,
@@ -129,9 +144,6 @@ class NotificationService {
         presentSound: true,
       ),
     );
-
-    final title = '🎁 عطية اليوم: ${gift.verseReference}';
-    final body = '«${gift.verseText}»\n\n${gift.reflection}';
 
     await _plugin.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -156,7 +168,10 @@ class NotificationService {
     required String title,
     required String body,
   }) async {
-    if (kIsWeb) return;
+    if (kIsWeb) {
+      showWebNotification(title, body);
+      return;
+    }
 
     const androidDetails = AndroidNotificationDetails(
       _channelId,

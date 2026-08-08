@@ -21,9 +21,16 @@ import '../../../curriculum/presentation/screens/curriculum_screen.dart';
 
 import '../../../../providers/navigation_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+import '../widgets/welcome_tutorial_dialog.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<Widget> _screens = const [
     GiftScreen(),
     AltarScreen(),
@@ -33,13 +40,40 @@ class HomeScreen extends ConsumerWidget {
   ];
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      WelcomeTutorialDialog.showIfFirstTime(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final currentIndex = ref.watch(navigationIndexProvider);
 
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: _screens,
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: currentIndex,
+            children: _screens,
+          ),
+          // Floating Info / Tutorial Button
+          Positioned(
+            left: 16,
+            top: MediaQuery.of(context).padding.top + 8,
+            child: Material(
+              color: Colors.white.withOpacity(0.85),
+              shape: const CircleBorder(),
+              elevation: 2,
+              child: IconButton(
+                icon: const Icon(Icons.info_outline_rounded, color: AppTheme.primaryColor, size: 20),
+                tooltip: 'شرح التطبيق',
+                onPressed: () => WelcomeTutorialDialog.showAlways(context),
+              ),
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
