@@ -37,6 +37,13 @@ class _WelcomeTutorialDialogState extends State<WelcomeTutorialDialog> {
 
   final List<_TutorialSlide> _slides = const [
     _TutorialSlide(
+      icon: '⛪',
+      title: 'أسرة مار أفرام السرياني',
+      subtitle: 'الأسر الجامعية — أسقفية الشباب ✝️',
+      description:
+          'تطبيق «رفيق يومي» صُنِع بِمَحَبَّة وإعداد أسرة مار أفرام السرياني لخدمة شباب الأسر الجامعية (أسقفية الشباب).\nالمنهج الروحي يتناول مادة «شبابيات» المعتمدة.',
+    ),
+    _TutorialSlide(
       icon: '🌅',
       title: 'عطية اليوم (Daily Gift)',
       subtitle: 'هدية الله الصباحية لك',
@@ -66,10 +73,10 @@ class _WelcomeTutorialDialogState extends State<WelcomeTutorialDialog> {
     ),
     _TutorialSlide(
       icon: '📖',
-      title: 'المنهج الروحي (Curriculum)',
+      title: 'مادة شبابيات (المنهج)',
       subtitle: 'علاقة الله بالإنسان وحريتك',
       description:
-          'تصفح بطاقات المنهج التفاعلية مع أسئلة وإجابات وشروح روحية عميقة لتنمو في معرفة الله ونفسك.',
+          'تصفح بطاقات المنهج التفاعلية لمادة «شبابيات» مع أسئلة وإجابات وشروح روحية عميقة لتنمو في معرفة الله ونفسك.',
     ),
   ];
 
